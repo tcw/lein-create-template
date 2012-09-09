@@ -1,7 +1,9 @@
 (ns leiningen.create-template
   (:use leiningen.classpath)
-  (:require [clojure.java.io :as jio])
+  (:require [clojure.java.io :as jio]
+            [clojure.string :as cs])
   (import (java.io File FileNotFoundException)))
+
 
 (def lein-project-template
   "(defproject ##projectname##/lein-template \"0.1.0-SNAPSHOT\"
@@ -23,44 +25,55 @@
   (let [data {:name name
               :sanitized (name-to-path name)}]
     (->files data
-             ##sourcefiles##
-             ##resourcefiles##
+               ##filelines##
              )))")
 
-;[\"src/{{sanitized}}/foo.clj\" (render \"foo.clj\" data)]
 
-(defn create-relative-sanitized-file-path [file root-path project-name]
-  (let [relative-path (clojure.string/replace (str file) root-path "")]
-    (clojure.string/replace relative-path project-name "{{sanitized}}")))
+(def lein-new-relative-path "src/leiningen/new")
 
-(defn sanitize-file-name [file-name]
-  (clojure.string/replace file-name #"-" "_"))
+(def lein-new-sanitized "{{sanitized}}")
 
-(defn replace-project-name [template project-name]
-  (clojure.string/replace template #"##projectname##" project-name))
 
-(defn add-resource-files-to-new-template [new-template root-path project-name resource-files]
-  (clojure.string/replace
-    new-template
-    #"##resourcefiles##"
-    (apply str (map
-      #(str "\"" (create-relative-sanitized-file-path % root-path project-name) "\" (render \"" (sanitize-file-name (.getName %)) "\")\n")
-      resource-files))))
+; TEXT UTILS
 
-(defn add-source-files-to-new-template [new-template root-path project-name source-files]
-  (clojure.string/replace
-    new-template
-    #"##sourcefiles##"
-    (apply str (map
-      #(str "\"" (create-relative-sanitized-file-path % root-path project-name) "\" (render \"" (sanitize-file-name (.getName %)) "\" data)\n")
-      source-files))))
+(defn new-lein-path [root-path project-name]
+  (str (cs/join "/" [root-path project-name lein-new-relative-path project-name]) "/"))
 
-(defn create-lein-new-file [new-template root-path project-name new-project-name resource-files source-files]
-  (let [template-with-resources (add-resource-files-to-new-template new-template root-path project-name resource-files)
-    source-and-resources (add-source-files-to-new-template template-with-resources root-path project-name source-files)]
-    (replace-project-name source-and-resources new-project-name)))
+(defn sanitize-from-clj [file-name]
+  (cs/replace file-name #"-" "_"))
 
-(defn new-path [^File file new-path]
+(defn sanitize-to-clj [file-name]
+  (cs/replace file-name #"_" "-"))
+
+(defn sanitize-project-name [path project-name]
+  (cs/replace path project-name lein-new-sanitized))
+
+(defn relative-path [file root-path]
+  (cs/replace (str file) (str root-path "/") ""))
+
+(defn make-file-line [file root-path project-name clj?]
+  (let [path (relative-path file root-path)
+        sanitized-path (sanitize-project-name path project-name)
+        sanitized-file-name (sanitize-to-clj (.getName file))]
+    (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]")))
+
+(defn add-to-template [template replace-tag text]
+  (cs/replace
+    template
+    replace-tag
+    (apply str text)))
+
+(defn templify-ns [clj-text old-project-name]
+  (let [old-name (str old-project-name ".")
+        new-name (str lein-new-sanitized ".")]
+    (add-to-template clj-text old-name new-name)))
+
+; FILE UTILS
+
+(defn is-file-type [type file]
+  (not (nil? (re-find (re-pattern (str "\\." type "$")) (str file)))))
+
+(defn new-file-path [^File file new-path]
   (jio/as-file (str new-path (.getName file))))
 
 (defn walk [^File dir]
@@ -72,49 +85,53 @@
 (defn get-files-recusivly [directory]
   (walk (jio/as-file directory)))
 
-(defn copy-resources [resource-files root-path new-project-name]
-  (let [new-file-path (str root-path "/" new-project-name "/src/leiningen/new/" new-project-name "/")]
-    (doseq [resource resource-files]
-      (let [file (new-path resource new-file-path)]
-        (jio/make-parents file)
-        (jio/copy resource file)))))
+(defn copy-file [file root-path new-project-name]
+  (let [file-path (new-lein-path root-path (sanitize-from-clj new-project-name))]
+    (let [file-new-path (new-file-path file file-path)]
+      (jio/make-parents file-new-path)
+      (jio/copy file file-new-path))))
 
-(defn create-template-file [text root-path project-name file-name]
-  (spit (str root-path "/" project-name "/" file-name) text))
-
-(defn copy-clj-files [clj-files root-path project-name new-project-name]
-  (let [new-file-path (str root-path "/" new-project-name "/src/leiningen/new/" new-project-name "/")]
-  (doseq [clj-file clj-files]
-    (let [file (new-path clj-file new-file-path)]
-      (jio/make-parents file)
-      (spit file (clojure.string/replace (slurp clj-file) (str project-name ".") (str "{{sanitized}}" ".")))))))
+(defn copy-clj-file [clj-file root-path old-project-name new-project-name]
+  (let [file-path (new-lein-path root-path (sanitize-from-clj new-project-name))]
+    (let [new-file (new-file-path clj-file file-path)
+          clj-text (slurp clj-file)]
+      (jio/make-parents new-file)
+      (spit new-file (templify-ns clj-text old-project-name)))))
 
 (defn create-template
   [project & args]
   (let [root-path (:root project)
-        project-name (last (clojure.string/split root-path #"/"))
+        old-project-name (last (cs/split root-path #"/"))
         new-project-name (first args)
         project-file (jio/as-file (str root-path "/project.clj"))
         source-files (get-files-recusivly (str root-path "/src"))
         resource-files (get-files-recusivly (str root-path "/resources"))
-        test-files (get-files-recusivly (str root-path "/test"))
+        test-source-files (get-files-recusivly (str root-path "/test"))
         test-resource-files (get-files-recusivly (str root-path "/test-resources"))]
 
-    (copy-resources resource-files root-path new-project-name)
-    (copy-resources test-resource-files root-path new-project-name)
-    (println (str "clj-files : " (apply str (map #(str %) (filter #(re-find #"\.clj$" (str %)) source-files)))))
-    (copy-clj-files (filter #(re-find #"\.clj$" (str %)) source-files) root-path project-name new-project-name)
-    (create-template-file
-      (replace-project-name lein-project-template new-project-name)
-      root-path
-      new-project-name
-      "project.clj")
+    (let [grouped-files (group-by #(or (is-file-type "clj" %) (is-file-type "cljs" %)) (concat source-files test-source-files))
+          all-clj-files (get grouped-files true)
+          other-files (get grouped-files false)
+          all-resource-files (concat resource-files test-resource-files other-files)
+          clj-lines (map #(make-file-line % root-path old-project-name true) all-clj-files)
+          resource-lines (map #(make-file-line % root-path old-project-name false) all-resource-files)]
 
+      (doseq [file all-resource-files]
+        (copy-file file root-path new-project-name))
 
-    (create-template-file
-      (create-lein-new-file lein-new-template root-path project-name new-project-name resource-files source-files)
-      root-path
-      (str new-project-name "/src/leiningen/new")
-      (str (sanitize-file-name new-project-name) ".clj"))))
+      (doseq [file all-clj-files]
+        (copy-clj-file file root-path old-project-name new-project-name))
+
+      (let [project-name (sanitize-from-clj new-project-name)
+            file-name (str project-name ".clj")
+            file (cs/join "/" [root-path project-name lein-new-relative-path file-name])
+            lines (cs/join "\n\t\t" (concat clj-lines resource-lines))
+            template (add-to-template lein-new-template "##filelines##" lines)]
+        (spit file template)))
+
+    (let [project-name (sanitize-from-clj new-project-name)
+          new-project-file (cs/join "/" [root-path project-name "project.clj"])
+          project-text (add-to-template lein-project-template "##projectname##" (sanitize-to-clj project-name))]
+        (spit new-project-file project-text))))
 
 
