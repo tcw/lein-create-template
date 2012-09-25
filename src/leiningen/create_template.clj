@@ -37,8 +37,6 @@
 
 ; TEXT UTILS
 
-(defn new-lein-path [root-path project-name]
-  (str (cs/join "/" [root-path project-name lein-new-relative-path project-name]) "/"))
 
 (defn sanitize-from-clj [file-name]
   (cs/replace file-name #"-" "_"))
@@ -51,6 +49,9 @@
 
 (defn relative-path [file root-path]
   (cs/replace (str file) (str root-path "/") ""))
+
+(defn new-lein-path [root-path project-name]
+  (str (cs/join "/" [root-path project-name lein-new-relative-path (sanitize-from-clj project-name)]) "/"))
 
 (defn make-file-line [file root-path project-name clj?]
   (let [path (relative-path file root-path)
@@ -87,28 +88,17 @@
   (walk (jio/as-file directory)))
 
 (defn copy-file [file root-path new-project-name]
-  (let [file-path (new-lein-path root-path (sanitize-from-clj new-project-name))]
+  (let [file-path (new-lein-path root-path new-project-name)]
     (let [file-new-path (new-file-path file file-path)]
       (jio/make-parents file-new-path)
       (jio/copy file file-new-path))))
 
 (defn copy-clj-file [clj-file root-path old-project-name new-project-name]
-  (let [file-path (new-lein-path root-path (sanitize-from-clj new-project-name))]
+  (let [file-path (new-lein-path root-path new-project-name)]
     (let [new-file (new-file-path clj-file file-path)
           clj-text (slurp clj-file)]
       (jio/make-parents new-file)
       (spit new-file (templify-ns clj-text old-project-name)))))
-
-(defn template-info [project args]
-  (let [root-path (:root project)]
-    {:root-path root-path
-     :old-project-name (last (cs/split root-path #"/"))
-     :new-project-name (first args)
-     :project-file (jio/as-file (str root-path "/project.clj"))
-     :source-files (get-files-recusivly (str root-path "/src"))
-     :resource-files (get-files-recusivly (str root-path "/resources"))
-     :test-source-files (get-files-recusivly (str root-path "/test"))
-     :test-resource-files (get-files-recusivly (str root-path "/test-resources"))}))
 
 (defn get-all-clj-files [info]
   (get (group-by
@@ -137,31 +127,40 @@
   (doseq [file files]
     (copy-clj-file file (:root-path info) (:old-project-name info) (:new-project-name info))))
 
+(defn create-main-template-file [clj-files resource-files info]
+  (let [lines (cs/join "\n\t\t" (create-template-lines info clj-files resource-files))
+        template-part (add-to-template lein-new-template "##filelines##" lines)]
+    (add-to-template template-part "##projectname##" (:new-project-name info))))
+
+(defn create-project-template-file [info]
+  (add-to-template lein-project-template "##projectname##" (:new-project-name info)))
+
+(defn template-info [project args]
+  (let [root-path (:root project)]
+    {:root-path root-path
+     :old-project-name (last (cs/split root-path #"/"))
+     :new-project-name (first args)
+     :project-file (jio/as-file (str root-path "/project.clj"))
+     :source-files (get-files-recusivly (str root-path "/src"))
+     :resource-files (get-files-recusivly (str root-path "/resources"))
+     :test-source-files (get-files-recusivly (str root-path "/test"))
+     :test-resource-files (get-files-recusivly (str root-path "/test-resources"))}))
+
 (defn create-template
   [project & args]
   (let [info (template-info project args)
         all-clj-files (get-all-clj-files info)
-        all-resource-files (get-all-resource-files info all-clj-files)]
+        all-resource-files (get-all-resource-files info all-clj-files)
+        new-project-name (:new-project-name info)
+        sanitized-new-project-name (sanitize-from-clj new-project-name)
+        root-path (:root-path info)
+        new-template-file (cs/join "/" [root-path new-project-name lein-new-relative-path (str sanitized-new-project-name ".clj")])
+        new-project-file (cs/join "/" [root-path new-project-name "project.clj"])]
 
-    (if (.exists (jio/as-file (str (str (:root-path info)) "/" (:new-project-name info))))
-      (println "Can't create template, there already exists a folder named:" (:new-project-name info))
+    (if (.exists (jio/as-file (str root-path "/" new-project-name)))
+      (println "Can't create template, there already exists a folder named:" new-project-name)
       (do
         (copy-clj-files all-clj-files info)
         (copy-resource-files all-resource-files info)
-
-        (let [project-name (sanitize-from-clj (:new-project-name info))
-              file-name (str project-name ".clj")
-              file (cs/join "/" [(:root-path info) project-name lein-new-relative-path file-name])
-              lines (cs/join "\n\t\t" (create-template-lines info all-clj-files all-resource-files))
-              template-part (add-to-template lein-new-template "##filelines##" lines)
-              template (add-to-template template-part "##projectname##" (sanitize-to-clj project-name))]
-          (spit file template))
-
-        (let [project-name (sanitize-from-clj (:new-project-name info))
-              new-project-file (cs/join "/" [(:root-path info) project-name "project.clj"])
-              project-text (add-to-template lein-project-template "##projectname##" (sanitize-to-clj project-name))]
-          (spit new-project-file project-text)))
-
-      )))
-
-
+        (spit new-template-file (create-main-template-file all-clj-files all-resource-files info))
+        (spit new-project-file (create-project-template-file info))))))
