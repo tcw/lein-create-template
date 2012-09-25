@@ -29,14 +29,9 @@
                ##filelines##
              )))")
 
-
 (def lein-new-relative-path "src/leiningen/new")
 
 (def lein-new-sanitized "{{sanitized}}")
-
-
-; TEXT UTILS
-
 
 (defn sanitize-from-clj [file-name]
   (cs/replace file-name #"-" "_"))
@@ -114,7 +109,7 @@
         clj-files (into #{} all-clj-files)]
     (difference all-files clj-files)))
 
-(defn create-template-lines [info resource-files clj-files]
+(defn create-template-lines [info clj-files resource-files]
   (let [clj-lines (map #(make-file-line % (:root-path info) (:old-project-name info) true) clj-files)
         resource-lines (map #(make-file-line % (:root-path info) (:old-project-name info) false) resource-files)]
     (concat clj-lines resource-lines)))
