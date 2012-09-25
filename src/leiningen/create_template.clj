@@ -143,8 +143,11 @@
         all-clj-files (get-all-clj-files info)
         all-resource-files (get-all-resource-files info all-clj-files)]
 
-    (copy-clj-files all-clj-files info)
-    (copy-resource-files all-resource-files info)
+    (if (.exists (jio/as-file (str (str (:root-path info)) "/" (:new-project-name info))))
+      (println "Can't create template, there already exists a folder named:" (:new-project-name info))
+      (do
+        (copy-clj-files all-clj-files info)
+        (copy-resource-files all-resource-files info)
 
         (let [project-name (sanitize-from-clj (:new-project-name info))
               file-name (str project-name ".clj")
@@ -157,8 +160,8 @@
         (let [project-name (sanitize-from-clj (:new-project-name info))
               new-project-file (cs/join "/" [(:root-path info) project-name "project.clj"])
               project-text (add-to-template lein-project-template "##projectname##" (sanitize-to-clj project-name))]
-          (spit new-project-file project-text))
+          (spit new-project-file project-text)))
 
-    ))
+      )))
 
 
