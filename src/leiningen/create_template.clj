@@ -60,9 +60,10 @@
     replace-tag
     (apply str text)))
 
+;TODO make more robust
 (defn templify-ns [clj-text old-project-name]
-  (let [old-name (str old-project-name ".")
-        new-name (str lein-new-sanitized ".")]
+  (let [old-name (str old-project-name)
+        new-name (str lein-new-sanitized)]
     (add-to-template clj-text old-name new-name)))
 
 ; FILE UTILS
@@ -98,7 +99,7 @@
 (defn get-all-clj-files [info]
   (get (group-by
          #(or (is-file-type "clj" %) (is-file-type "cljs" %))
-         (concat (:source-files info) (:test-source-files info)))
+         (concat (:source-files info) (:test-source-files info) [(:project-file info)]))
     true))
 
 (defn get-all-resource-files [info all-clj-files]
