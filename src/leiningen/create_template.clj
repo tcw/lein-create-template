@@ -51,7 +51,7 @@
 (defn make-file-line [file root-path project-name clj?]
   (let [path (relative-path file root-path)
         sanitized-path (sanitize-project-name path project-name)
-        sanitized-file-name (sanitize-to-clj (.getName file))]
+        sanitized-file-name (sanitize-from-clj (.getName file))]
     (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]")))
 
 (defn add-to-template [template replace-tag text]
@@ -71,7 +71,7 @@
   (not (nil? (re-find (re-pattern (str "\\." type "$")) (str file)))))
 
 (defn new-file-path [^File file new-path]
-  (jio/as-file (str new-path (.getName file))))
+  (jio/as-file (str new-path (sanitize-from-clj (.getName file)))))
 
 (defn walk [^File dir]
   (let [children (.listFiles dir)
@@ -102,11 +102,11 @@
     true))
 
 (defn get-all-resource-files [info all-clj-files]
-  (let [all-files (into #{} (concat (:resource-files info)
+  (let [all-files (set (concat (:resource-files info)
                               (:test-resource-files info)
                               (:source-files info)
                               (:test-source-files info)))
-        clj-files (into #{} all-clj-files)]
+        clj-files (set all-clj-files)]
     (difference all-files clj-files)))
 
 (defn create-template-lines [info clj-files resource-files]
