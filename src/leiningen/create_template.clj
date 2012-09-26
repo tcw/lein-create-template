@@ -5,7 +5,6 @@
             [clojure.string :as cs])
   (import (java.io File FileNotFoundException)))
 
-
 (def lein-project-template
   "(defproject ##projectname##/lein-template \"0.1.0-SNAPSHOT\"
   :description \"FIXME: write description\"
@@ -65,8 +64,6 @@
   (let [old-name (str old-project-name)
         new-name (str lein-new-sanitized)]
     (add-to-template clj-text old-name new-name)))
-
-; FILE UTILS
 
 (defn is-file-type [type file]
   (not (nil? (re-find (re-pattern (str "\\." type "$")) (str file)))))
