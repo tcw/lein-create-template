@@ -143,7 +143,7 @@
   [project & args]
 
   (if (empty? args)
-    (println "You must enter a new tempalte name!")
+    (println "You must enter a new template name!")
 
     (let [info (template-info project args)
           all-clj-files (get-all-clj-files info)
