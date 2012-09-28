@@ -1,6 +1,7 @@
 (ns leiningen.create-template
   (:use leiningen.classpath
-        clojure.set)
+        clojure.set
+        stencil.core)
   (:require [clojure.java.io :as jio]
             [clojure.string :as cs])
   (import (java.io File FileNotFoundException)))
@@ -126,7 +127,7 @@
     (add-to-template template-part "##projectname##" (:new-project-name info))))
 
 (defn create-project-template-file [info]
-  (add-to-template lein-project-template "##projectname##" (:new-project-name info)))
+  (add-to-template (render-file "project" {:project (:new-project-name info)})))
 
 (defn template-info [project args]
   (let [root-path (:root project)]
