@@ -1,22 +1,22 @@
 # lein-create-template
 
-A Leiningen plugin to do many wonderful things.
+A Leiningen plugin for creating templates from existing skeleton projects
 
 ## Usage
 
-FIXME: Use this for user-level plugins:
+Under construction, not yet on clojars!
 
-Put `[lein-create-template "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your
+Put `[lein-create-template "0.1.0"]` into the `:plugins` vector of your
 `:user` profile, or if you are on Leiningen 1.x do `lein plugin install
-lein-create-template 0.1.0-SNAPSHOT`.
+lein-create-template 0.1.0`.
 
-FIXME: Use this for project-level plugins:
 
-Put `[lein-create-template "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your project.clj.
+    $ lein create-template <new template name>
 
-FIXME: and add an example usage that actually makes sense:
+Will create a folder on the root of your Leiningen project.
+The folder will be assigned the name you provided in <new template name>
+and will contain a Leiningen template project of your project.
 
-    $ lein create-template
 
 ## License
 
