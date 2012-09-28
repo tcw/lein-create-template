@@ -127,7 +127,7 @@
     (add-to-template template-part "##projectname##" (:new-project-name info))))
 
 (defn create-project-template-file [info]
-  (add-to-template (render-file "project" {:project (:new-project-name info)})))
+  (render-file "project" {:project (:new-project-name info)}))
 
 (defn template-info [project args]
   (let [root-path (:root project)]

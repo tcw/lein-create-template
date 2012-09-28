@@ -10,14 +10,14 @@
   (jio/as-file (str root-path relative-file-name)))
 
 (def mock-info
-    {:root-path root-path
-     :old-project-name "rest-ful"
-     :new-project-name "rest-ful-template"
-     :project-file (mock-file "/project.clj")
-     :source-files [(mock-file "/src/rest_ful.clj") (mock-file "/src/rest_ful_2.clj")]
-     :resource-files [(mock-file "/resources/index-site.html") (mock-file "/resources/some_crazy-File.js")]
-     :test-source-files [(mock-file "/src/rest_ful_test.clj") (mock-file "/src/rest_ful_2_test.clj")]
-     :test-resource-files [(mock-file "/resources/index-site.html") (mock-file "/resources/some_crazy-File.js")]})
+  {:root-path root-path
+   :old-project-name "rest-ful"
+   :new-project-name "rest-ful-template"
+   :project-file (mock-file "/project.clj")
+   :source-files [(mock-file "/src/rest_ful.clj") (mock-file "/src/rest_ful_2.clj")]
+   :resource-files [(mock-file "/resources/index-site.html") (mock-file "/resources/some_crazy-File.js")]
+   :test-source-files [(mock-file "/src/rest_ful_test.clj") (mock-file "/src/rest_ful_2_test.clj")]
+   :test-resource-files [(mock-file "/resources/index-site.html") (mock-file "/resources/some_crazy-File.js")]})
 
 (describe "File and namespace utils"
 
@@ -49,13 +49,10 @@
 (describe "Generating clj code files"
 
   (it "generates a new template project file"
-    ()
-    )
-
-
+    (let [template (create-project-template-file mock-info)]
+      (should (re-seq #"rest-ful-template" template))
+      (should (re-seq #"/lein-template" template))
+      (should (re-seq #"eval-in-leiningen true\)" template))))
   )
-
-
-
 
 (run-specs)

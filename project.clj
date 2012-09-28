@@ -9,4 +9,5 @@
                  [stencil "0.3.0"]]
   :plugins [[speclj "2.1.2"]]
   :test-paths ["spec/"]
+  :resource-paths ["resources/"]
   :eval-in-leiningen true)
