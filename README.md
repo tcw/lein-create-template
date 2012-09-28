@@ -4,6 +4,8 @@ A Leiningen plugin for creating templates from existing skeleton projects
 
 ## Usage
 
+In alpha state!!
+
 Under construction, not yet on clojars!
 
 Put `[lein-create-template "0.1.0"]` into the `:plugins` vector of your
@@ -12,6 +14,7 @@ lein-create-template 0.1.0`.
 
 
     $ lein create-template <new template name>
+
 
 Will create a folder on the root of your Leiningen project.
 The folder will be assigned the name you provided in <new template name>
