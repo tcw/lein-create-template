@@ -6,28 +6,7 @@
             [clojure.string :as cs])
   (import (java.io File FileNotFoundException)))
 
-(def lein-project-template
-  "(defproject ##projectname##/lein-template \"0.1.0-SNAPSHOT\"
-  :description \"FIXME: write description\"
-  :url \"http://example.com/FIXME\"
-  :license {:name \"Eclipse Public License\"
-            :url \"http://www.eclipse.org/legal/epl-v10.html\"}
-  :eval-in-leiningen true)")
-
-(def lein-new-template
-  "(ns leiningen.new.##projectname##
-  (:use [leiningen.new.templates :only [renderer name-to-path ->files]]))
-
-(def render (renderer \"##projectname##\"))
-
-(defn ##projectname##
-  \"FIXME: write documentation\"
-  [name]
-  (let [data {:name name
-              :sanitized (name-to-path name)}]
-    (->files data
-               ##filelines##
-             )))")
+;------------------------------ Referential transparent---------------------------------------------
 
 (def lein-new-relative-path "src/leiningen/new")
 
@@ -54,45 +33,14 @@
         sanitized-file-name (sanitize-from-clj (.getName file))]
     (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]")))
 
-(defn add-to-template [template replace-tag text]
-  (cs/replace
-    template
-    replace-tag
-    (apply str text)))
-
-;TODO make more robust
-(defn templify-ns [clj-text old-project-name]
-  (let [old-name (str old-project-name)
-        new-name (str lein-new-sanitized)]
-    (add-to-template clj-text old-name new-name)))
-
-(defn is-file-type [type file]
-  (not (nil? (re-find (re-pattern (str "\\." type "$")) (str file)))))
-
 (defn new-file-path [^File file new-path]
   (jio/as-file (str new-path (sanitize-from-clj (.getName file)))))
 
-(defn walk [^File dir]
-  (let [children (.listFiles dir)
-        subdirs (filter #(.isDirectory %) children)
-        files (filter #(.isFile %) children)]
-    (concat files (mapcat walk subdirs))))
+(defn get-new-sanitized-lein-file [file root-path new-project-name]
+  (jio/as-file (str (new-lein-path root-path new-project-name) (sanitize-from-clj (.getName file)))))
 
-(defn get-files-recusivly [directory]
-  (walk (jio/as-file directory)))
-
-(defn copy-file [file root-path new-project-name]
-  (let [file-path (new-lein-path root-path new-project-name)]
-    (let [file-new-path (new-file-path file file-path)]
-      (jio/make-parents file-new-path)
-      (jio/copy file file-new-path))))
-
-(defn copy-clj-file [clj-file root-path old-project-name new-project-name]
-  (let [file-path (new-lein-path root-path new-project-name)]
-    (let [new-file (new-file-path clj-file file-path)
-          clj-text (slurp clj-file)]
-      (jio/make-parents new-file)
-      (spit new-file (templify-ns clj-text old-project-name)))))
+(defn is-file-type [type file]
+  (not (nil? (re-find (re-pattern (str "\\." type "$")) (str file)))))
 
 (defn get-all-clj-files [info]
   (get (group-by
@@ -108,23 +56,41 @@
         clj-files (set all-clj-files)]
     (difference all-files clj-files)))
 
-(defn create-template-lines [info clj-files resource-files]
-  (let [clj-lines (map #(make-file-line % (:root-path info) (:old-project-name info) true) clj-files)
-        resource-lines (map #(make-file-line % (:root-path info) (:old-project-name info) false) resource-files)]
-    (concat clj-lines resource-lines)))
+;-----------------------------------------------------------------------------------------------------------
+
+(defn walk [^File dir]
+  (let [children (.listFiles dir)
+        subdirs (filter #(.isDirectory %) children)
+        files (filter #(.isFile %) children)]
+    (concat files (mapcat walk subdirs))))
+
+(defn get-files-recusivly [directory]
+  (walk (jio/as-file directory)))
+
+(defn copy-file [file root-path new-project-name]
+  (let [new-file (get-new-sanitized-lein-file file root-path new-project-name)]
+    (jio/make-parents new-file)
+    (jio/copy file new-file)))
 
 (defn copy-resource-files [files info]
   (doseq [file files]
     (copy-file file (:root-path info) (:new-project-name info))))
 
+(defn copy-clj-file [file root-path old-project-name new-project-name]
+  (let [new-file (get-new-sanitized-lein-file file root-path new-project-name)
+        clj-text (slurp file)]
+    (jio/make-parents new-file)
+    (spit new-file (cs/replace clj-text old-project-name lein-new-sanitized))))
+
 (defn copy-clj-files [files info]
   (doseq [file files]
     (copy-clj-file file (:root-path info) (:old-project-name info) (:new-project-name info))))
 
-(defn create-main-template-file [clj-files resource-files info]
-  (let [lines (cs/join "\n\t\t" (create-template-lines info clj-files resource-files))
-        template-part (add-to-template lein-new-template "##filelines##" lines)]
-    (add-to-template template-part "##projectname##" (:new-project-name info))))
+(defn create-template-render-file [clj-files resource-files info]
+  (let [clj-lines (map #(make-file-line % (:root-path info) (:old-project-name info) true) clj-files)
+        resource-lines (map #(make-file-line % (:root-path info) (:old-project-name info) false) resource-files)
+        file-lines (concat clj-lines resource-lines)]
+    (render-file "template" {:project (:new-project-name info) :files (apply str file-lines)})))
 
 (defn create-project-template-file [info]
   (render-file "project" {:project (:new-project-name info)}))
@@ -152,7 +118,7 @@
           new-project-name (:new-project-name info)
           sanitized-new-project-name (sanitize-from-clj new-project-name)
           root-path (:root-path info)
-          new-template-file (cs/join "/" [root-path new-project-name lein-new-relative-path (str sanitized-new-project-name ".clj")])
+          new-template-render-file (cs/join "/" [root-path new-project-name lein-new-relative-path (str sanitized-new-project-name ".clj")])
           new-project-file (cs/join "/" [root-path new-project-name "project.clj"])]
 
       (if (.exists (jio/as-file (str root-path "/" new-project-name)))
@@ -160,5 +126,5 @@
         (do
           (copy-clj-files all-clj-files info)
           (copy-resource-files all-resource-files info)
-          (spit new-template-file (create-main-template-file all-clj-files all-resource-files info))
+          (spit new-template-render-file (create-template-render-file all-clj-files all-resource-files info))
           (spit new-project-file (create-project-template-file info)))))))
