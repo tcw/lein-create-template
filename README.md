@@ -18,7 +18,7 @@ lein-create-template 0.1.0`.
 
 Will create a folder on the root of your Leiningen project.
 The folder will be assigned the name you provided
-and will contain a Leiningen template project of your project.
+and will contain a Leiningen template project of your skeleton project.
 
 
 ## License
