@@ -10,6 +10,7 @@
   (jio/as-file (str root-path relative-file-name)))
 
 (def source-file (mock-file "/src/rest_ful.clj"))
+
 (def resource-file (mock-file "/resources/index-site.html"))
 
 (def mock-info
@@ -17,11 +18,10 @@
    :old-project-name "rest-ful"
    :new-project-name "rest-ful-template"
    :project-file (mock-file "/project.clj")
-   :source-files [source-file (mock-file "/src/rest_ful_2.clj")]
+   :source-files [source-file (mock-file "/src/rest_ful_2.clj") (mock-file "/src/rest_ful_2.cljs") (mock-file "/template/stencil.mustache")]
    :resource-files [resource-file (mock-file "/resources/some_crazy-File.js")]
    :test-source-files [(mock-file "/src/rest_ful_test.clj") (mock-file "/src/rest_ful_2_test.clj")]
-   :test-resource-files [(mock-file "/resources/index-site.html") (mock-file "/resources/some_crazy-File.js")]})
-
+   :test-resource-files [(mock-file "/resources/index-site_test.html") (mock-file "/resources/some_crazy-File_test.js")]})
 
 
 (describe "File and namespace utils"
@@ -50,9 +50,27 @@
   (it "creates a relative path for files in the new lein template project"
     (should= "home/user/mytemplates/ringtemplate/src/leiningen/new/ringtemplate/" (new-lein-path "home/user/mytemplates" "ringtemplate")))
 
-  (it "creates a new file containing the new lein template filepath"
-    (should= "/home/user/leiningen/tempalte/ringtemplate/src/leiningen/new/ringtemplate/rest_ful.clj" (str (get-new-sanitized-lein-file source-file root-path "ringtemplate")))
-    )
+  (it "creates a file with sanitized file name"
+    (should= "home/user/lein/index_site.html" (str (new-file-path resource-file "home/user/lein/"))))
+
+  (it "takes a file from the skeleton project and returns a file for the template project"
+    (should= "/home/user/leiningen/tempalte/ringtemplate/src/leiningen/new/ringtemplate/rest_ful.clj" (str (get-new-sanitized-lein-file source-file root-path "ringtemplate"))))
+
+  (it "desides if a file is of type"
+    (should (is-file-type "clj" source-file))
+    (should (is-file-type "html" resource-file))
+    (should-not (is-file-type "clj" resource-file)))
+
+  )
+
+(describe "Organizing files from skeleton project"
+
+  (it "returns a set of all files"
+    (should= 11 (count (get-all-files mock-info))))
+
+  (it "returns all clj and cljs files"
+    (should= 6 (count (get-all-clj-files mock-info))))
+
   )
 
 (describe "Generating clj code files"
