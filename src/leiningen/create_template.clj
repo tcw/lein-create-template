@@ -1,6 +1,5 @@
 (ns leiningen.create-template
-  (:use leiningen.classpath
-        clojure.set
+  (:use clojure.set
         stencil.core)
   (:require [clojure.java.io :as jio]
             [clojure.string :as cs])
