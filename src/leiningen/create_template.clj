@@ -123,7 +123,6 @@
       (if (.exists (jio/as-file (str root-path "/" new-project-name)))
         (println "Can't create template, there already exists a folder named:" new-project-name)
         (do
-        ;TODO handle mismatch between lein project name and root folder (use old lein project-name)
           (copy-clj-files all-clj-files info)
           (copy-resource-files all-resource-files info)
           (spit new-template-render-file (create-template-render-file all-clj-files all-resource-files info))
