@@ -6,8 +6,6 @@
             [clojure.string :as cs])
   (import (java.io File FileNotFoundException)))
 
-;------------------------------ Referential transparent---------------------------------------------
-
 (def lein-newnew-relative-path "src/leiningen/new")
 
 (def lein-newnew-sanitized "{{sanitized}}")
@@ -31,7 +29,7 @@
   (let [path (relative-path file root-path)
         sanitized-path (cs/replace path (sanitize-from-clj old-project-name) lein-newnew-sanitized)
         sanitized-file-name (sanitize-from-clj (.getName file))]
-    (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]")))
+    (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]\n")))
 
 (defn new-file-path [^File file new-path]
   (jio/as-file (str new-path (sanitize-from-clj (.getName file)))))
@@ -45,17 +43,18 @@
 (defn get-all-clj-files [info]
   (set (get (group-by
               #(or (is-file-type "clj" %) (is-file-type "cljs" %))
-              (concat (:source-files info) (:test-source-files info) [(:project-file info)]))
+              (concat
+                (:source-files info)
+                (:test-files info)
+                [(:project-file info)]))
          true)))
 
 (defn get-all-files [info]
   (set (concat (:resource-files info)
          (:source-files info)
-         (:test-resource-files info)
-         (:test-source-files info)
+         (:test-files info)
+         (:java-files info)
          [(:project-file info)])))
-
-;-----------------------------------------------------------------------------------------------------------
 
 (defn- walk [^File dir]
   (let [children (.listFiles dir)
@@ -63,8 +62,8 @@
         files (filter #(.isFile %) children)]
     (concat files (mapcat walk subdirs))))
 
-(defn- get-files-recusivly [directory]
-  (walk (jio/as-file directory)))
+(defn- get-files-recusivly [directories]
+  (set (mapcat #(walk (jio/as-file %)) directories)))
 
 (defn- copy-file [file root-path new-project-name]
   (let [new-file (get-new-sanitized-lein-file file root-path new-project-name)]
@@ -100,10 +99,10 @@
      :old-project-name (:name project)
      :new-project-name (first args)
      :project-file (jio/as-file (str root-path "/project.clj"))
-     :source-files (get-files-recusivly (str root-path "/src"))
-     :resource-files (get-files-recusivly (str root-path "/resources"))
-     :test-source-files (get-files-recusivly (str root-path "/test"))
-     :test-resource-files (get-files-recusivly (str root-path "/test-resources"))}))
+     :source-files (get-files-recusivly (:source-paths project))
+     :resource-files (get-files-recusivly (:resource-paths project))
+     :java-files (get-files-recusivly (:java-source-paths project))
+     :test-files (get-files-recusivly (:test-paths project))}))
 
 (defn create-template
   [project & args]

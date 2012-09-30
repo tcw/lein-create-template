@@ -18,11 +18,10 @@
    :old-project-name "rest-ful"
    :new-project-name "rest-ful-template"
    :project-file (mock-file "/project.clj")
-   :source-files [source-file (mock-file "/src/rest_ful_2.clj") (mock-file "/src/rest_ful_2.cljs") (mock-file "/template/stencil.mustache")]
-   :resource-files [resource-file (mock-file "/resources/some_crazy-File.js")]
-   :test-source-files [(mock-file "/src/rest_ful_test.clj") (mock-file "/src/rest_ful_2_test.clj")]
-   :test-resource-files [(mock-file "/resources/index-site_test.html") (mock-file "/resources/some_crazy-File_test.js")]})
-
+   :source-files (seq [source-file (mock-file "/src/rest_ful_2.clj") (mock-file "/src/rest_ful_2.cljs") (mock-file "/template/stencil.mustache")])
+   :resource-files (seq [resource-file (mock-file "/resources/some_crazy-File.js")])
+   :java-files (seq [(mock-file "/java/rest_ful_test.java") (mock-file "/java/rest_ful_2_test.java")])
+   :test-files (seq [(mock-file "/spec/rest_ful_spec.clj") (mock-file "/spec/rest_ful_2_spec.clj")])})
 
 (describe "File and namespace utils"
 
@@ -76,8 +75,8 @@
 (describe "Generating clj code files"
 
   (it "generates a new clj code line that points to the file"
-    (should= "[\"/home/user/leiningen/tempalte/src/rest_ful.clj\" (render \"rest_ful.clj\" data)]" (make-file-line source-file root-path (:new-project-name mock-info) true))
-    (should= "[\"/home/user/leiningen/tempalte/resources/index-site.html\" (render \"index_site.html\")]" (make-file-line resource-file root-path (:new-project-name mock-info) false)))
+    (should= "[\"/home/user/leiningen/tempalte/src/rest_ful.clj\" (render \"rest_ful.clj\" data)]\n" (make-file-line source-file root-path (:new-project-name mock-info) true))
+    (should= "[\"/home/user/leiningen/tempalte/resources/index-site.html\" (render \"index_site.html\")]\n" (make-file-line resource-file root-path (:new-project-name mock-info) false)))
 
   (it "generates a new template clj code file that specifies how to render resources"
     (should (re-seq #"\[\"/home/user/leiningen/tempalte/resources/index-site\.html"
