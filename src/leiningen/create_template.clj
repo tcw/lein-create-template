@@ -27,9 +27,9 @@
 (defn new-lein-path [root-path project-name]
   (str (cs/join "/" [root-path project-name lein-newnew-relative-path (sanitize-from-clj project-name)]) "/"))
 
-(defn make-file-line [file root-path project-name clj?]
+(defn make-file-line [file root-path old-project-name clj?]
   (let [path (relative-path file root-path)
-        sanitized-path (sanitize-project-name path project-name)
+        sanitized-path (cs/replace path (sanitize-from-clj old-project-name) lein-newnew-sanitized)
         sanitized-file-name (sanitize-from-clj (.getName file))]
     (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]")))
 
@@ -44,9 +44,9 @@
 
 (defn get-all-clj-files [info]
   (set (get (group-by
-         #(or (is-file-type "clj" %) (is-file-type "cljs" %))
-         (concat (:source-files info) (:test-source-files info) [(:project-file info)]))
-    true)))
+              #(or (is-file-type "clj" %) (is-file-type "cljs" %))
+              (concat (:source-files info) (:test-source-files info) [(:project-file info)]))
+         true)))
 
 (defn get-all-files [info]
   (set (concat (:resource-files info)
@@ -97,7 +97,7 @@
 (defn- template-info [project args]
   (let [root-path (:root project)]
     {:root-path root-path
-     :old-project-name (last (cs/split root-path #"/"))
+     :old-project-name (:name project)
      :new-project-name (first args)
      :project-file (jio/as-file (str root-path "/project.clj"))
      :source-files (get-files-recusivly (str root-path "/src"))
@@ -123,6 +123,7 @@
       (if (.exists (jio/as-file (str root-path "/" new-project-name)))
         (println "Can't create template, there already exists a folder named:" new-project-name)
         (do
+        ;TODO handle mismatch between lein project name and root folder (use old lein project-name)
           (copy-clj-files all-clj-files info)
           (copy-resource-files all-resource-files info)
           (spit new-template-render-file (create-template-render-file all-clj-files all-resource-files info))
