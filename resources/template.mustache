@@ -1,9 +1,9 @@
-(ns leiningen.new.{{project}}
+(ns leiningen.new.{{{project}}}
   (:use [leiningen.new.templates :only [renderer name-to-path ->files]]))
 
-(def render (renderer "{{project}}"))
+(def render (renderer "{{{project}}}"))
 
-(defn {{project}}
+(defn {{{project}}}
   [name]
   (let [data {:name name
               :sanitized (name-to-path name)}]

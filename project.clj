@@ -1,6 +1,6 @@
 (defproject lein-create-template "0.1.0"
   :description "A Leiningen plugin for creating templates from existing skeleton projects"
-  :url "http://example.com/FIXME"
+  :url "http://github.com/tcw/lein-create-template"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[speclj "2.1.2"]
