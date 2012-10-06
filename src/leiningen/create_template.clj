@@ -107,7 +107,7 @@
   [project & args]
 
   (if (empty? args)
-    (println "You must enter a new template name!")
+    (println "You must enter a new template name!\nusage: lein new create-template <template-name>")
 
     (let [info (template-info project args)
           all-clj-files (get-all-clj-files info)
@@ -124,4 +124,5 @@
           (copy-clj-files all-clj-files info)
           (copy-resource-files all-resource-files info)
           (spit new-template-render-file (create-template-render-file all-clj-files all-resource-files info))
-          (spit new-project-file (create-project-template-file info)))))))
+          (spit new-project-file (create-project-template-file info))
+          (println (str "Created template project:" new-project-name)))))))

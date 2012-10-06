@@ -2,13 +2,18 @@
 
 A Leiningen plugin for creating templates from existing skeleton projects
 
+
+##Setup
+
+This plugin requires Leiningen 2.0+
+
+Add to ~/.lein/profiles.clj:
+
+    $ {:user {:plugins [[lein-create-template "0.1.0"]]}}
+
 ## Usage
 
-Not yet on clojars!
-
-This plugin needs Leiningen 2.x
-
-Navigate to the root path of your Leiningen skeleton project
+Navigate to the root path of your Leiningen skeleton project and execute
 
     $ lein create-template <new template name>
 
@@ -17,7 +22,6 @@ The folder will be assigned the new template name you provided
 and will contain a Leiningen template project of your skeleton project.
 
 Move the template project folder to the destination of choice.
-
 At the root of your new template project execute the following command.
 
     $ lein install
