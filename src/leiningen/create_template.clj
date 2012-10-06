@@ -77,6 +77,7 @@
   (let [new-file (get-new-sanitized-lein-file file root-path new-project-name)
         clj-text (slurp file)]
     (jio/make-parents new-file)
+    ;TODO This can be improved
     (spit new-file (cs/replace clj-text old-project-name lein-newnew-sanitized))))
 
 (defn- copy-clj-files [files info]
@@ -107,7 +108,7 @@
   [project & args]
 
   (if (empty? args)
-    (println "You must enter a new template name!\nusage: lein new create-template <template-name>")
+    (println "You must enter a new template name!\nusage: lein create-template <template-name>")
 
     (let [info (template-info project args)
           all-clj-files (get-all-clj-files info)
