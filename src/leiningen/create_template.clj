@@ -2,12 +2,15 @@
   (:use clojure.set
         stencil.core)
   (:require [clojure.java.io :as jio]
-            [clojure.string :as cs])
+            [clojure.string :as cs]
+            [leiningen.file-utils :as fu])
   (import (java.io File FileNotFoundException)))
 
 (def lein-newnew-relative-path "src/leiningen/new")
 
 (def lein-newnew-sanitized "{{sanitized}}")
+
+(def lein-newnew-sanitized-ns "{{ns-name}}")
 
 (defn sanitize-from-clj [file-name]
   (cs/replace file-name #"-" "_"))
@@ -55,32 +58,31 @@
          (:java-files info)
          [(:project-file info)])))
 
-(defn- walk [^File dir]
+(defn walk [^File dir]
   (let [children (.listFiles dir)
         subdirs (filter #(.isDirectory %) children)
         files (filter #(.isFile %) children)]
     (concat files (mapcat walk subdirs))))
 
-(defn- get-files-recusivly [directories]
+(defn get-files-recusivly [directories]
   (set (mapcat #(walk (jio/as-file %)) directories)))
 
-(defn- copy-file [file root-path new-project-name]
+(defn copy-file [file root-path new-project-name]
   (let [new-file (get-new-sanitized-lein-file file root-path new-project-name)]
-    (jio/make-parents new-file)
-    (jio/copy file new-file)))
+    (fu/copy-file-force-path file new-file)))
 
-(defn- copy-resource-files [files info]
+(defn copy-resource-files [files info]
   (doseq [file files]
     (copy-file file (:root-path info) (:new-project-name info))))
 
-(defn- copy-clj-file [file root-path old-project-name new-project-name]
+(defn copy-clj-file [file root-path old-project-name new-project-name]
   (let [new-file (get-new-sanitized-lein-file file root-path new-project-name)
         clj-text (slurp file)]
     (jio/make-parents new-file)
     ;TODO This can be improved
-    (spit new-file (cs/replace clj-text old-project-name lein-newnew-sanitized))))
+    (spit new-file (cs/replace clj-text old-project-name lein-newnew-sanitized-ns))))
 
-(defn- copy-clj-files [files info]
+(defn copy-clj-files [files info]
   (doseq [file files]
     (copy-clj-file file (:root-path info) (:old-project-name info) (:new-project-name info))))
 

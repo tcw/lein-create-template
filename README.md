@@ -9,7 +9,7 @@ This plugin requires Leiningen 2.0+
 
 Add to ~/.lein/profiles.clj:
 
-    $ {:user {:plugins [[lein-create-template "0.1.0"]]}}
+    {:user {:plugins [[lein-create-template "0.1.1"]]}}
 
 ## Usage
 
