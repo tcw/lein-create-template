@@ -1,4 +1,4 @@
-(defproject lein-create-template "0.1.1"
+(defproject lein-create-template "0.1.2"
   :description "A Leiningen plugin for creating templates from existing skeleton projects"
   :url "http://github.com/tcw/lein-create-template"
   :license {:name "Eclipse Public License"
