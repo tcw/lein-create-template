@@ -103,6 +103,7 @@
      :old-project-name (:name project)
      :new-project-name (first args)
      :project-file (jio/as-file (str root-path "/project.clj"))
+     :source-files (get-files-recusivly (:source-paths project))
      :template-additions (for [f (:template-additions project)] (jio/as-file f))
      :resource-files (get-files-recusivly (:resource-paths project))
      :java-files (get-files-recusivly (:java-source-paths project))
