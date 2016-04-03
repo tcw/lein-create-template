@@ -37,3 +37,8 @@
   (jio/make-parents destination)
   (jio/copy source destination))
 
+(defn create-project-template [project-name]
+  (str "(defproject " project-name "/lein-template \"0.1.0-SNAPSHOT\"\n  :description \"Created with lein-create-template\"\n  :url \"http://example.com/FIXME\"\n  :license {:name \"Eclipse Public License\"\n            :url \"http://www.eclipse.org/legal/epl-v10.html\"}\n  :eval-in-leiningen true)"))
+
+(defn create-newnew-template [project-name files]
+  (str "(ns leiningen.new." project-name "\n  (:use [leiningen.new.templates :only [renderer name-to-path sanitize-ns ->files]]))\n\n(def render (renderer \"" project-name "\"))\n\n(defn " project-name "\n  [name]\n  (let [data {:name name\n              :ns-name (sanitize-ns name)\n              :sanitized (name-to-path name)}]\n    (->files data " files ")))"))

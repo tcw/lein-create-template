@@ -1,6 +1,5 @@
 (ns leiningen.create-template
-  (:use clojure.set
-        stencil.core)
+  (:use clojure.set)
   (:require [clojure.java.io :as jio]
             [clojure.string :as cs]
             [leiningen.file-utils :as fu])
@@ -92,10 +91,8 @@
   (let [clj-lines (map #(make-file-line % (:root-path info) (:old-project-name info) true) clj-files)
         resource-lines (map #(make-file-line % (:root-path info) (:old-project-name info) false) resource-files)
         file-lines (concat clj-lines resource-lines)]
-    (render-file "template" {:project (:new-project-name info) :files (apply str file-lines)})))
+    (fu/create-newnew-template (:new-project-name info) (apply str file-lines))))
 
-(defn create-project-template-file [info]
-  (render-file "project" {:project (:new-project-name info)}))
 
 (defn- template-info [project args]
   (let [root-path (:root project)]
@@ -130,5 +127,5 @@
           (copy-clj-files all-clj-files info)
           (copy-resource-files all-resource-files info)
           (spit new-template-render-file (create-template-render-file all-clj-files all-resource-files info))
-          (spit new-project-file (create-project-template-file info))
+          (spit new-project-file (fu/create-project-template (:new-project-name info)))
           (println (str "Created template project:" new-project-name)))))))
