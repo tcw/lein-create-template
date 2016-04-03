@@ -70,10 +70,3 @@
 (deftest generates-a-new-template-clj-code-file-that-specifies-how-to-render-resources
   (is (re-seq #"\[\"/home/user/leiningen/tempalte/resources/index-site\.html"
               (create-template-render-file (:source-files mock-info) (:resource-files mock-info) mock-info))))
-
-(deftest generates-a-new-template-clj-project-file
-  (let [template (create-project-template-file mock-info)]
-    (is (re-seq #"ct rest-ful-template/lein-t" template))
-    (is (re-seq #"eval-in-leiningen true\)" template))))
-
-(run-tests 'leiningen.create-template-test)

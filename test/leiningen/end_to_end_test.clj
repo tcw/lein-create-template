@@ -48,5 +48,3 @@
   (is (= "Created template project:my-new-template\n"
          (with-out-str (create-template mock-project new-template-name))))
   (fu/delete-file-recursively test-dir))
-
-(run-tests 'leiningen.end_to_end_test)
