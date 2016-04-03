@@ -14,7 +14,8 @@
 (def mock-files
   {:project-file   (mock-file "/project.clj")
    :source-file1   (mock-file "/src/my_skeleton/core.clj")
-   :source-file2   (mock-file "/src/my_skeleton/core_utils_2.clj")
+   :source-file2   (mock-file "/src/my_skeleton2/core.clj")
+   :source-file3   (mock-file "/src/my_skeleton/core_utils_2.clj")
    :test-file1     (mock-file "/test/my_skeleton/core_test.clj")
    :resource-file1 (mock-file "/resources/index-1.html")
    :resource-file2 (mock-file "/resources/index_2.html")})
@@ -28,7 +29,8 @@
 (defn build-mock-project []
   (fu/copy-file-force-path (dev-resource "dev_project.clj") (:project-file mock-files))
   (fu/copy-file-force-path (dev-resource "dev_core.clj") (:source-file1 mock-files))
-  (fu/copy-file-force-path (dev-resource "dev_core_utils_2.clj") (:source-file2 mock-files))
+  (fu/copy-file-force-path (dev-resource "dev_core2.clj") (:source-file2 mock-files))
+  (fu/copy-file-force-path (dev-resource "dev_core_utils_2.clj") (:source-file3 mock-files))
   (fu/copy-file-force-path (dev-resource "dev_core_test.clj") (:test-file1 mock-files))
   (fu/copy-file-force-path (dev-resource "index_1.html") (:resource-file1 mock-files))
   (fu/copy-file-force-path (dev-resource "index-2.html") (:resource-file2 mock-files)))
@@ -47,4 +49,5 @@
   (is (re-seq #"dev_core.clj" (str (jio/resource "dev_core.clj"))))
   (is (= "Created template project:my-new-template\n"
          (with-out-str (create-template mock-project new-template-name))))
-  (fu/delete-file-recursively test-dir))
+  ;(fu/delete-file-recursively test-dir)
+  )
