@@ -23,7 +23,7 @@
 (defn make-file-line [file root-path old-project-name clj?]
   (let [path (relative-path file root-path)
         sanitized-path (cs/replace path (sanitize-from-clj old-project-name) lein-newnew-sanitized)
-        sanitized-file-name (sanitize-from-clj (.getName file))]
+        sanitized-file-name (relative-path file root-path)]
     (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]\n")))
 
 ;TODO This can be improved
@@ -31,7 +31,7 @@
   (cs/replace clj-text old-project-name lein-newnew-sanitized-ns))
 
 (defn get-new-sanitized-lein-file [file root-path new-project-name]
-  (jio/as-file (str (new-lein-path root-path new-project-name) (sanitize-from-clj (.getName file)))))
+  (jio/as-file (str (new-lein-path root-path new-project-name) (relative-path file root-path))))
 
 (defn get-new-template-render-file [root-path new-project-name]
   (cs/join (File/separator) [root-path new-project-name lein-newnew-relative-path (str (sanitize-from-clj new-project-name) ".clj")]))

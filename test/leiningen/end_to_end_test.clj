@@ -2,7 +2,17 @@
   (:use clojure.test
         leiningen.create-template)
   (:require [clojure.java.io :as jio]
-            [leiningen.file-utils :as fu]))
+            [leiningen.file-utils :as fu])
+  (import (java.io File FileNotFoundException)))
+
+
+(defn delete-file-recursively
+  [f & [silently]]
+  (let [f (jio/file f)]
+    (if (.isDirectory f)
+      (doseq [child (.listFiles f)]
+        (delete-file-recursively child silently)))
+    (jio/delete-file f silently)))
 
 (def test-dir (fu/create-tmp-dir "/dev" 10))
 
@@ -49,5 +59,5 @@
   (is (re-seq #"dev_core.clj" (str (jio/resource "dev_core.clj"))))
   (is (= "Created template project:my-new-template\n"
          (with-out-str (create-template mock-project new-template-name))))
-  ;(fu/delete-file-recursively test-dir)
+  ;(delete-file-recursively test-dir)
   )
