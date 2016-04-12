@@ -2,18 +2,6 @@
   (:require [clojure.java.io :as jio])
   (import (java.io File FileNotFoundException)))
 
-(def tmp-dir (System/getProperty "java.io.tmpdir"))
-
-(defn create-tmp-dir [tmp-dir-name attempts]
-  (let [millis (System/currentTimeMillis)]
-    (loop [attempts-done 1]
-      (if (= attempts attempts-done)
-        nil
-        (let [dir (jio/as-file (str tmp-dir tmp-dir-name millis attempts-done))]
-          (if (.mkdir dir)
-            dir
-            (recur (+ 1 attempts-done))))))))
-
 (defn walk [^File dir]
   (let [children (.listFiles dir)
         subdirs (filter #(.isDirectory %) children)

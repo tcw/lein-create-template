@@ -24,7 +24,7 @@
   (let [path (relative-path file root-path)
         sanitized-path (cs/replace path (sanitize-from-clj old-project-name) lein-newnew-sanitized)
         sanitized-file-name (relative-path file root-path)]
-    (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]\n")))
+    (str "[\"" sanitized-path "\" (render \"" sanitized-file-name "\"" (when clj? " data") ")]" (System/lineSeparator))))
 
 ;TODO This can be improved
 (defn sanitize-ns-in-clj-file [clj-text old-project-name]
